@@ -83,15 +83,9 @@ class MainActivity : ComponentActivity() {
                     AnimatedContent(
                         targetState = currentScreen,
                         transitionSpec = {
-                            val isDetailTransition = initialState is Screen.VaccineDetail || targetState is Screen.VaccineDetail
-                            if (isDetailTransition) {
-                                (fadeIn(animationSpec = tween(300)))
-                                    .togetherWith(fadeOut(animationSpec = tween(300)))
-                            } else {
-                                val direction = navigationDirection
-                                (slideInHorizontally { width -> direction * width } + fadeIn(animationSpec = tween(300)))
-                                    .togetherWith(slideOutHorizontally { width -> -direction * width } + fadeOut(animationSpec = tween(300)))
-                            }
+                            val direction = navigationDirection
+                            (slideInHorizontally { width -> direction * width } + fadeIn(animationSpec = tween(300)))
+                                .togetherWith(slideOutHorizontally { width -> -direction * width } + fadeOut(animationSpec = tween(300)))
                         },
                         label = "screen_transition"
                     ) { screen ->

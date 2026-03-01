@@ -2,7 +2,9 @@ package com.vaccineplanner.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -20,9 +22,25 @@ fun PaidVaccineListScreen(
     onVaccineSelect: (Vaccine) -> Unit,
     onVaccineDeselect: (Vaccine) -> Unit,
     onViewDetail: (Vaccine) -> Unit,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    savedScrollPosition: Int = 0,
+    onSaveScrollPosition: (Int) -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
+    
+    val listState = rememberLazyListState()
+    
+    LaunchedEffect(savedScrollPosition) {
+        if (savedScrollPosition > 0) {
+            listState.scrollToItem(savedScrollPosition)
+        }
+    }
+    
+    DisposableEffect(Unit) {
+        onDispose {
+            onSaveScrollPosition(listState.firstVisibleItemIndex)
+        }
+    }
     
     val filteredVaccines = paidVaccines.filter { 
         searchQuery.isBlank() || it.chineseName.contains(searchQuery) || it.name.contains(searchQuery)
@@ -93,6 +111,7 @@ fun PaidVaccineListScreen(
             }
             
             LazyColumn(
+                state = listState,
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {

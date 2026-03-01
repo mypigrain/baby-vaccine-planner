@@ -11,6 +11,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.vaccineplanner.ui.screens.*
@@ -43,6 +46,8 @@ class MainActivity : ComponentActivity() {
                     val currentScreen by viewModel.currentScreen.collectAsState()
                     val selectedVaccineForDetail by viewModel.selectedVaccineForDetail.collectAsState()
                     
+                    var mainListState by remember { mutableStateOf(mapOf<String, Int>()) }
+                    
                     val backPressHandler = {
                         when (currentScreen) {
                             is Screen.BabyInfo -> {
@@ -56,7 +61,7 @@ class MainActivity : ComponentActivity() {
                             }
                             is Screen.VaccineDetail -> {
                                 viewModel.selectVaccineForDetail(null)
-                                viewModel.navigateTo(Screen.PaidVaccineList)
+                                viewModel.navigateTo(viewModel.detailSourceScreen.value ?: Screen.VaccineSchedule)
                             }
                         }
                     }
@@ -87,10 +92,15 @@ class MainActivity : ComponentActivity() {
                                     onMarkIncomplete = { viewModel.markVaccinationIncomplete(it) },
                                     onNavigateToPaidVaccines = { viewModel.navigateTo(Screen.PaidVaccineList) },
                                     onNavigateToVaccineDetail = { vaccine ->
-                                        viewModel.selectVaccineForDetail(vaccine)
-                                        viewModel.navigateTo(Screen.VaccineDetail)
+                                        viewModel.navigateToDetail(Screen.VaccineSchedule, vaccine)
                                     },
-                                    onReset = { viewModel.resetAll() }
+                                    onReset = { viewModel.resetAll() },
+                                    savedScrollPosition = mainListState["schedule"] ?: 0,
+                                    onSaveScrollPosition = { position ->
+                                        mainListState = mainListState.toMutableMap().also {
+                                            it["schedule"] = position
+                                        }
+                                    }
                                 )
                             }
                         }
@@ -102,10 +112,15 @@ class MainActivity : ComponentActivity() {
                                 onVaccineSelect = { viewModel.addPaidVaccine(it) },
                                 onVaccineDeselect = { viewModel.removePaidVaccine(it) },
                                 onViewDetail = { vaccine ->
-                                    viewModel.selectVaccineForDetail(vaccine)
-                                    viewModel.navigateTo(Screen.VaccineDetail)
+                                    viewModel.navigateToDetail(Screen.PaidVaccineList, vaccine)
                                 },
-                                onNavigateBack = { viewModel.navigateTo(Screen.VaccineSchedule) }
+                                onNavigateBack = { viewModel.navigateTo(Screen.VaccineSchedule) },
+                                savedScrollPosition = mainListState["paid"] ?: 0,
+                                onSaveScrollPosition = { position ->
+                                    mainListState = mainListState.toMutableMap().also {
+                                        it["paid"] = position
+                                    }
+                                }
                             )
                         }
                         
@@ -118,7 +133,7 @@ class MainActivity : ComponentActivity() {
                                     onRemoveFromSchedule = { viewModel.removePaidVaccine(vaccine) },
                                     onNavigateBack = { 
                                         viewModel.selectVaccineForDetail(null)
-                                        viewModel.navigateTo(viewModel.previousScreen.value ?: Screen.VaccineSchedule)
+                                        viewModel.navigateTo(viewModel.detailSourceScreen.value ?: Screen.VaccineSchedule)
                                     }
                                 )
                             }

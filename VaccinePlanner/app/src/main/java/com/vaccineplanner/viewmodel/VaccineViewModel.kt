@@ -55,6 +55,15 @@ class VaccineViewModel(application: Application) : AndroidViewModel(application)
     private val _previousScreen = MutableStateFlow<Screen?>(null)
     val previousScreen: StateFlow<Screen?> = _previousScreen.asStateFlow()
     
+    private val _detailSourceScreen = MutableStateFlow<Screen?>(null)
+    val detailSourceScreen: StateFlow<Screen?> = _detailSourceScreen.asStateFlow()
+    
+    private val _scheduleScrollPosition = MutableStateFlow(0)
+    val scheduleScrollPosition: StateFlow<Int> = _scheduleScrollPosition.asStateFlow()
+    
+    private val _paidVaccineScrollPosition = MutableStateFlow(0)
+    val paidVaccineScrollPosition: StateFlow<Int> = _paidVaccineScrollPosition.asStateFlow()
+    
     private val _selectedVaccineForDetail = MutableStateFlow<Vaccine?>(null)
     val selectedVaccineForDetail: StateFlow<Vaccine?> = _selectedVaccineForDetail.asStateFlow()
     
@@ -141,6 +150,20 @@ class VaccineViewModel(application: Application) : AndroidViewModel(application)
     
     fun selectVaccineForDetail(vaccine: Vaccine?) {
         _selectedVaccineForDetail.value = vaccine
+    }
+    
+    fun saveScheduleScrollPosition(position: Int) {
+        _scheduleScrollPosition.value = position
+    }
+    
+    fun savePaidVaccineScrollPosition(position: Int) {
+        _paidVaccineScrollPosition.value = position
+    }
+    
+    fun navigateToDetail(fromScreen: Screen, vaccine: Vaccine) {
+        _detailSourceScreen.value = fromScreen
+        _selectedVaccineForDetail.value = vaccine
+        _currentScreen.value = Screen.VaccineDetail
     }
     
     fun getFreeVaccines(): List<Vaccine> = VaccineRepository.freeVaccines

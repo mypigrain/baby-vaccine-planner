@@ -21,7 +21,6 @@ import com.vaccineplanner.data.model.VaccineType
 import com.vaccineplanner.ui.theme.FreeVaccineGreen
 import com.vaccineplanner.ui.theme.PaidVaccineOrange
 import java.time.LocalDate
-import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
@@ -41,10 +40,8 @@ fun VaccinationCard(
     
     val daysDiff = ChronoUnit.DAYS.between(babyBirthDate, record.scheduledDate).toInt()
     val monthIndex = daysDiff / 30
-    val monthGroup = YearMonth.from(babyBirthDate).plusMonths(monthIndex.toLong())
-    val monthEndDate = monthGroup.atEndOfMonth()
-    val daysSinceMonthEnd = ChronoUnit.DAYS.between(monthEndDate, today).toInt()
-    val isOverdue = !record.isCompleted && daysSinceMonthEnd > 30
+    val deadline = babyBirthDate.plusDays(((monthIndex + 1) * 30).toLong())
+    val isOverdue = !record.isCompleted && today.isAfter(deadline)
     
     val cardColor = when {
         record.isCompleted -> Color(0xFFE8F5E9)
@@ -60,18 +57,18 @@ fun VaccinationCard(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = cardColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(horizontal = 10.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(6.dp))
                     .background(typeColor.copy(alpha = 0.2f)),
                 contentAlignment = Alignment.Center
             ) {
@@ -79,11 +76,11 @@ fun VaccinationCard(
                     imageVector = if (record.isCompleted) Icons.Default.CheckCircle else Icons.Default.Shield,
                     contentDescription = null,
                     tint = if (record.isCompleted) Color(0xFF4CAF50) else typeColor,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(18.dp)
                 )
             }
             
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(8.dp))
             
             Column(modifier = Modifier.weight(1f)) {
                 Row(
@@ -93,54 +90,59 @@ fun VaccinationCard(
                     Text(
                         text = vaccine.chineseName,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
+                        fontSize = 13.sp,
                         maxLines = 1,
                         modifier = Modifier.weight(1f, fill = false)
                     )
-                    IconButton(
+                    TextButton(
                         onClick = onInfoClick,
-                        modifier = Modifier.size(24.dp)
+                        contentPadding = PaddingValues(horizontal = 2.dp, vertical = 0.dp),
+                        modifier = Modifier.height(20.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Info,
-                            contentDescription = "查看疫苗信息",
-                            tint = Color.Gray,
-                            modifier = Modifier.size(18.dp)
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Spacer(modifier = Modifier.width(1.dp))
+                        Text(
+                            text = "介绍",
+                            fontSize = 10.sp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+                
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "第${record.doseNumber}剂",
+                        fontSize = 10.sp,
+                        color = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    if (isPaid) {
+                        Text(
+                            text = "自费",
+                            fontSize = 9.sp,
+                            color = PaidVaccineOrange,
+                            modifier = Modifier
+                                .background(PaidVaccineOrange.copy(alpha = 0.1f), RoundedCornerShape(3.dp))
+                                .padding(horizontal = 4.dp, vertical = 1.dp)
+                        )
+                    } else {
+                        Text(
+                            text = "免费",
+                            fontSize = 9.sp,
+                            color = FreeVaccineGreen,
+                            modifier = Modifier
+                                .background(FreeVaccineGreen.copy(alpha = 0.1f), RoundedCornerShape(3.dp))
+                                .padding(horizontal = 4.dp, vertical = 1.dp)
                         )
                     }
                 }
                 
                 Spacer(modifier = Modifier.height(2.dp))
-                
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "第${record.doseNumber}剂",
-                        fontSize = 11.sp,
-                        color = Color.Gray
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    if (isPaid) {
-                        Text(
-                            text = "自费",
-                            fontSize = 10.sp,
-                            color = PaidVaccineOrange,
-                            modifier = Modifier
-                                .background(PaidVaccineOrange.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
-                                .padding(horizontal = 5.dp, vertical = 2.dp)
-                        )
-                    } else {
-                        Text(
-                            text = "免费",
-                            fontSize = 10.sp,
-                            color = FreeVaccineGreen,
-                            modifier = Modifier
-                                .background(FreeVaccineGreen.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
-                                .padding(horizontal = 5.dp, vertical = 2.dp)
-                        )
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(4.dp))
                 
                 val daysSinceBirth = ChronoUnit.DAYS.between(babyBirthDate, record.scheduledDate).toInt()
                 val monthIndex = daysSinceBirth / 30
@@ -150,21 +152,21 @@ fun VaccinationCard(
                 
                 Text(
                     text = dateRangeText,
-                    fontSize = 13.sp,
+                    fontSize = 11.sp,
                     color = Color.Gray
                 )
                 
                 if (record.isCompleted && record.completedDate != null) {
                     Text(
-                        text = "已完成接种",
-                        fontSize = 12.sp,
+                        text = "已完成",
+                        fontSize = 10.sp,
                         color = Color(0xFF4CAF50),
                         fontWeight = FontWeight.Medium
                     )
                 } else if (isOverdue) {
                     Text(
                         text = "已逾期",
-                        fontSize = 12.sp,
+                        fontSize = 10.sp,
                         color = Color(0xFFF44336),
                         fontWeight = FontWeight.Medium
                     )
@@ -172,20 +174,24 @@ fun VaccinationCard(
             }
             
             if (record.isCompleted) {
-                IconButton(onClick = { onMarkIncomplete(record.id) }) {
-                    Icon(
-                        imageVector = Icons.Default.Refresh,
-                        contentDescription = "取消已完成",
-                        tint = Color.Gray
-                    )
+                OutlinedButton(
+                    onClick = { onMarkIncomplete(record.id) },
+                    modifier = Modifier.height(28.dp),
+                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp)
+                ) {
+                    Text("完成", fontSize = 11.sp)
                 }
             } else {
-                IconButton(onClick = { onMarkCompleted(record.id) }) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = "标记已完成",
-                        tint = Color(0xFF4CAF50)
+                Button(
+                    onClick = { onMarkCompleted(record.id) },
+                    modifier = Modifier.height(28.dp),
+                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = FreeVaccineGreen,
+                        contentColor = Color.White
                     )
+                ) {
+                    Text("接种", fontSize = 11.sp)
                 }
             }
         }

@@ -59,7 +59,7 @@ fastlane/test_output
 
 # Screenshots
 screenshots/*.png
-screenshots/*.jpg
+!screenshots/*.jpg
 !screenshots/README.txt
 
 # Version control

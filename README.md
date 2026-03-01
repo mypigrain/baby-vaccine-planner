@@ -45,13 +45,13 @@
 
 | 婴儿信息录入 | 疫苗接种计划 | AI分析结果 |
 |--------------|--------------|------------|
-| ![Baby Info](screenshots/baby_info.png) | ![Vaccine Schedule](screenshots/schedule.png) | ![AI Analysis](screenshots/ai_analysis.png) |
+| ![Baby Info](screenshots/baby_info.jpg) | ![Vaccine Schedule](screenshots/schedule.jpg) | ![AI Analysis](screenshots/ai_analysis.jpg) |
 
 | 付费疫苗列表 | 疫苗详情 | AI设置 |
 |--------------|----------|--------|
-| ![Paid Vaccines](screenshots/paid_list.png) | ![Vaccine Detail](screenshots/vaccine_detail.png) | ![AI Settings](screenshots/ai_settings.png) |
+| ![Paid Vaccines](screenshots/paid_list.jpg) | ![Vaccine Detail](screenshots/vaccine_detail.jpg) | ![AI Settings](screenshots/ai_settings.jpg) |
 
-> 注：截图路径为 `screenshots/`，请在实际使用前添加相应截图
+> 注：截图路径为 `screenshots/`，格式为 JPG
 
 ## 🚀 快速开始
 

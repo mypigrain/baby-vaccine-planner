@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import com.vaccineplanner.data.model.Baby
 import com.vaccineplanner.data.model.VaccinationRecord
 import com.vaccineplanner.data.model.Vaccine
+import com.vaccineplanner.ui.components.AIAnalysisTypeDialog
 import com.vaccineplanner.ui.components.VaccinationCard
 import com.vaccineplanner.ui.theme.FreeVaccineGreen
 import com.vaccineplanner.ui.theme.PaidVaccineOrange
@@ -38,6 +39,10 @@ fun VaccineScheduleScreen(
     onMarkIncomplete: (String) -> Unit,
     onNavigateToPaidVaccines: () -> Unit,
     onNavigateToVaccineDetail: (Vaccine) -> Unit,
+    onAIOverallAnalysis: () -> Unit,
+    onAICurrentMonthAnalysis: () -> Unit,
+    onAIVaccineInfoQuery: () -> Unit,
+    onNavigateToAISettings: () -> Unit,
     onReset: () -> Unit,
     savedScrollPosition: Int = 0,
     onSaveScrollPosition: (Int) -> Unit = {}
@@ -46,6 +51,7 @@ fun VaccineScheduleScreen(
     var selectedFilter by remember { mutableStateOf("全部") }
     var showResetDialog by remember { mutableStateOf(false) }
     var showCurrentMonthOnly by remember { mutableStateOf(false) }
+    var showAIAnalysisMenu by remember { mutableStateOf(false) }
     
     val listState = rememberLazyListState()
     
@@ -97,7 +103,23 @@ fun VaccineScheduleScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("${baby.name}的接种计划") }
+                title = { Text("${baby.name}的接种计划") },
+                actions = {
+                    TextButton(onClick = { showAIAnalysisMenu = true }) {
+                        Icon(
+                            Icons.Default.Psychology,
+                            contentDescription = "AI分析",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            "AI分析",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
             )
         },
         floatingActionButton = {
@@ -305,6 +327,16 @@ fun VaccineScheduleScreen(
         ResetConfirmDialog(
             onConfirm = onReset,
             onDismiss = { showResetDialog = false }
+        )
+    }
+    
+    if (showAIAnalysisMenu) {
+        AIAnalysisTypeDialog(
+            onDismiss = { showAIAnalysisMenu = false },
+            onOverallAnalysis = onAIOverallAnalysis,
+            onCurrentMonthAnalysis = onAICurrentMonthAnalysis,
+            onVaccineInfoQuery = onAIVaccineInfoQuery,
+            onNavigateToSettings = onNavigateToAISettings
         )
     }
 }

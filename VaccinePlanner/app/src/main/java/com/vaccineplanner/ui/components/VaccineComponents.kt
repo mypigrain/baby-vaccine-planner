@@ -37,20 +37,26 @@ fun VaccinationCard(
 ) {
     val vaccine = record.vaccine
     val isPaid = !vaccine.isFree
-    val today = LocalDate.now()
     
-    val daysDiff = ChronoUnit.DAYS.between(babyBirthDate, record.scheduledDate).toInt()
-    val monthIndex = daysDiff / 30
-    val deadline = babyBirthDate.plusDays(((monthIndex + 1) * 30).toLong())
-    val isOverdue = !record.isCompleted && today.isAfter(deadline)
-    
-    val cardColor = when {
-        record.isCompleted -> Color(0xFFE8F5E9)
-        isOverdue -> Color(0xFFFFEBEE)
-        isPaid -> Color(0xFFFFF3E0)
-        else -> Color.White
+    val cardData = remember(record.id, record.isCompleted, record.scheduledDate, babyBirthDate) {
+        val daysDiff = ChronoUnit.DAYS.between(babyBirthDate, record.scheduledDate).toInt()
+        val monthIndex = daysDiff / 30
+        val deadline = babyBirthDate.plusDays(((monthIndex + 1) * 30).toLong())
+        val isOverdue = !record.isCompleted && LocalDate.now().isAfter(deadline)
+        
+        val color = when {
+            record.isCompleted -> Color(0xFFE8F5E9)
+            isOverdue -> Color(0xFFFFEBEE)
+            isPaid -> Color(0xFFFFF3E0)
+            else -> Color.White
+        }
+        
+        Triple(color, isOverdue, monthIndex)
     }
     
+    val cardColor = cardData.first
+    val isOverdue = cardData.second
+    val monthIndex = cardData.third
     val typeColor = if (isPaid) PaidVaccineOrange else FreeVaccineGreen
     
     Card(
@@ -145,11 +151,11 @@ fun VaccinationCard(
                 
                 Spacer(modifier = Modifier.height(2.dp))
                 
-                val daysSinceBirth = ChronoUnit.DAYS.between(babyBirthDate, record.scheduledDate).toInt()
-                val monthIndex = daysSinceBirth / 30
-                val monthStart = babyBirthDate.plusMonths(monthIndex.toLong())
-                val monthEnd = babyBirthDate.plusMonths((monthIndex + 1).toLong()).minusDays(1)
-                val dateRangeText = "${monthStart.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))} - ${monthEnd.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))}"
+                val dateRangeText = remember(monthIndex, babyBirthDate) {
+                    val monthStart = babyBirthDate.plusMonths(monthIndex.toLong())
+                    val monthEnd = babyBirthDate.plusMonths((monthIndex + 1).toLong()).minusDays(1)
+                    "${monthStart.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))} - ${monthEnd.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))}"
+                }
                 
                 Text(
                     text = dateRangeText,
@@ -218,7 +224,7 @@ fun VaccineInfoCard(
             containerColor = if (isSelected) typeColor.copy(alpha = 0.1f) else Color.White
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = null
+        border = BorderStroke(width = 0.5.dp, color = Color(0xFFE0E0E0))
     ) {
         Row(
             modifier = Modifier

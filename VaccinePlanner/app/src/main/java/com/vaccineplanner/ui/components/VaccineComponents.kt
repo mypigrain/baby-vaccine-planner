@@ -16,7 +16,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.unit.dp
 import com.vaccineplanner.data.model.VaccinationRecord
 import com.vaccineplanner.data.model.Vaccine
 import com.vaccineplanner.data.model.VaccineType
@@ -218,7 +217,8 @@ fun VaccineInfoCard(
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) typeColor.copy(alpha = 0.1f) else Color.White
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = null
     ) {
         Row(
             modifier = Modifier

@@ -543,4 +543,5 @@ sealed class Screen(val ordinal: Int) {
     object VaccineDetail : Screen(3)
     object AISettings : Screen(4)
     object AIAnalysisResult : Screen(5)
+    object DonateScreen : Screen(6)
 }

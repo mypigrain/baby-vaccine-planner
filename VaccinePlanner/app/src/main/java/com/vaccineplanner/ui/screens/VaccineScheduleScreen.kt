@@ -52,6 +52,7 @@ fun VaccineScheduleScreen(
     onAICurrentMonthAnalysis: () -> Unit,
     onAIVaccineInfoQuery: () -> Unit,
     onNavigateToAISettings: () -> Unit,
+    onNavigateToDonate: () -> Unit,
     onReset: () -> Unit,
     savedScrollPosition: Int = 0,
     onSaveScrollPosition: (Int) -> Unit = {}
@@ -115,6 +116,21 @@ fun VaccineScheduleScreen(
             TopAppBar(
                 title = { Text("${baby.name}的接种计划") },
                 actions = {
+                    TextButton(onClick = onNavigateToDonate) {
+                        Icon(
+                            Icons.Default.Favorite,
+                            contentDescription = "捐赠",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            "捐赠",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
                     TextButton(onClick = { showAIAnalysisMenu = true }) {
                         Icon(
                             Icons.Default.Psychology,

@@ -97,6 +97,9 @@ class MainActivity : ComponentActivity() {
                             is Screen.AIAnalysisResult -> {
                                 viewModel.navigateTo(Screen.VaccineSchedule)
                             }
+                            is Screen.DonateScreen -> {
+                                viewModel.navigateTo(Screen.VaccineSchedule)
+                            }
                         }
                     }
                     
@@ -150,6 +153,7 @@ class MainActivity : ComponentActivity() {
                                         showVaccineSelectionDialog = true
                                     },
                                     onNavigateToAISettings = { viewModel.navigateTo(Screen.AISettings) },
+                                    onNavigateToDonate = { viewModel.navigateTo(Screen.DonateScreen) },
                                     onReset = { viewModel.resetAll() },
                                     savedScrollPosition = mainListState["schedule"] ?: 0,
                                     onSaveScrollPosition = { position ->
@@ -237,6 +241,12 @@ class MainActivity : ComponentActivity() {
                                         }
                                     }
                                 } else null
+                            )
+                        }
+                        
+                        is Screen.DonateScreen -> {
+                            DonateScreen(
+                                onNavigateBack = { viewModel.navigateTo(Screen.VaccineSchedule) }
                             )
                         }
                     }

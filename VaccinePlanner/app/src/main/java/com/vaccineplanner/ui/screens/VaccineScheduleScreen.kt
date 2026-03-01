@@ -182,12 +182,19 @@ fun VaccineScheduleScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 12.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 FilterChip(
                     selected = showCurrentMonthOnly,
                     onClick = { showCurrentMonthOnly = !showCurrentMonthOnly },
-                    label = { Text(if (showCurrentMonthOnly) "仅当月 ✓" else "仅当月") },
+                    label = { 
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(if (showCurrentMonthOnly) "仅当月 ✓" else "仅当月")
+                        }
+                    },
                     leadingIcon = {
                         Icon(
                             Icons.Default.CalendarMonth,
@@ -204,7 +211,14 @@ fun VaccineScheduleScreen(
                     FilterChip(
                         selected = selectedFilter != "全部",
                         onClick = { showFilterMenu = true },
-                        label = { Text(selectedFilter) },
+                        label = { 
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(selectedFilter)
+                            }
+                        },
                         leadingIcon = {
                             Icon(
                                 Icons.Default.FilterList,
@@ -249,7 +263,14 @@ fun VaccineScheduleScreen(
                 FilterChip(
                     selected = false,
                     onClick = { showResetDialog = true },
-                    label = { Text("重置") },
+                    label = { 
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("重置")
+                        }
+                    },
                     leadingIcon = {
                         Icon(
                             Icons.Default.Refresh,

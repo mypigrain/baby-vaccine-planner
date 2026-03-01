@@ -72,7 +72,7 @@ cd baby-vaccine-planner/VaccinePlanner
 2. **配置API密钥（可选）**
    - 应用支持两种方式配置DeepSeek API密钥：
      1. **应用内配置**：启动应用后，进入"AI设置"页面直接输入API密钥（推荐）
-     2. **配置文件方式**：复制 `app/src/main/res/values/api_config.xml.example` 到 `api_config.xml`，添加你的API密钥
+      2. **配置文件方式**：复制项目根目录的 `api_config.xml.example` 到 `app/src/main/res/values/api_config.xml`，添加你的API密钥
    - AI功能需要有效的DeepSeek API密钥，可在[DeepSeek官网](https://platform.deepseek.com/)获取
 
 3. **构建和运行**
@@ -125,14 +125,14 @@ VaccinePlanner/
 │   │   └── viewmodel/                         # ViewModel层
 │   └── src/main/res/
 │       ├── values/                            # 字符串、颜色、主题等资源
-│       │   ├── api_config.xml.example         # API配置示例文件
 │       │   ├── colors.xml
 │       │   ├── strings.xml
 │       │   └── themes.xml
 │       ├── mipmap-*/                          # 应用图标
 │       └── drawable/                          # 矢量图形资源
 ├── build.gradle.kts                           # 模块构建配置
-└── settings.gradle                            # 项目设置
+├── settings.gradle                            # 项目设置
+└── api_config.xml.example                     # API配置示例文件
 ```
 
 ## 🔧 开发指南

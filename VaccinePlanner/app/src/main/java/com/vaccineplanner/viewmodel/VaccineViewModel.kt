@@ -58,9 +58,6 @@ class VaccineViewModel(application: Application) : AndroidViewModel(application)
     private val _detailSourceScreen = MutableStateFlow<Screen?>(null)
     val detailSourceScreen: StateFlow<Screen?> = _detailSourceScreen.asStateFlow()
     
-    private val _navigationDirection = MutableStateFlow(1)
-    val navigationDirection: StateFlow<Int> = _navigationDirection.asStateFlow()
-    
     private val _scheduleScrollPosition = MutableStateFlow(0)
     val scheduleScrollPosition: StateFlow<Int> = _scheduleScrollPosition.asStateFlow()
     
@@ -147,7 +144,6 @@ class VaccineViewModel(application: Application) : AndroidViewModel(application)
     }
     
     fun navigateTo(screen: Screen) {
-        _navigationDirection.value = if (screen.ordinal > _currentScreen.value.ordinal) 1 else -1
         _previousScreen.value = _currentScreen.value
         _currentScreen.value = screen
     }
@@ -165,9 +161,8 @@ class VaccineViewModel(application: Application) : AndroidViewModel(application)
     }
     
     fun navigateToDetail(fromScreen: Screen, vaccine: Vaccine) {
-        _navigationDirection.value = 1
-        _previousScreen.value = fromScreen
         _detailSourceScreen.value = fromScreen
+        _previousScreen.value = fromScreen
         _selectedVaccineForDetail.value = vaccine
         _currentScreen.value = Screen.VaccineDetail
     }

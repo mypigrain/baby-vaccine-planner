@@ -6,13 +6,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.OnBackPressedCallback
-import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -52,7 +47,6 @@ class MainActivity : ComponentActivity() {
                     val selectedPaidVaccines by viewModel.selectedPaidVaccines.collectAsState()
                     val currentScreen by viewModel.currentScreen.collectAsState()
                     val selectedVaccineForDetail by viewModel.selectedVaccineForDetail.collectAsState()
-                    val navigationDirection by viewModel.navigationDirection.collectAsState()
                     
                     var mainListState by remember { mutableStateOf(mapOf<String, Int>()) }
                     
@@ -80,13 +74,9 @@ class MainActivity : ComponentActivity() {
                         }
                     })
                     
-                    AnimatedContent(
+                    Crossfade(
                         targetState = currentScreen,
-                        transitionSpec = {
-                            val direction = navigationDirection
-                            (slideInHorizontally { width -> direction * width } + fadeIn(animationSpec = tween(300)))
-                                .togetherWith(slideOutHorizontally { width -> -direction * width } + fadeOut(animationSpec = tween(300)))
-                        },
+                        animationSpec = tween(300),
                         label = "screen_transition"
                     ) { screen ->
                         when (screen) {

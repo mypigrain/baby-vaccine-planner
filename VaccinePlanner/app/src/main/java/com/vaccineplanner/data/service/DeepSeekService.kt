@@ -200,7 +200,19 @@ object DeepSeekService {
                     response: Response?
                 ) {
                     val errorDetails = response?.body?.string() ?: t?.message ?: "未知错误"
-                    throw Exception("API请求失败：${response?.code} - $errorDetails")
+                    
+                    // Parse error details if available
+                    val errorType = when {
+                        response?.code == 401 -> "API Key无效或已过期"
+                        response?.code == 429 -> "API请求频率过高，请稍后再试"
+                        response?.code == 500 -> "DeepSeek服务器错误"
+                        errorDetails?.contains("401") == true -> "API Key验证失败"
+                        errorDetails?.contains("invalid") == true -> "无效的API Key"
+                        errorDetails?.contains("expired") == true -> "API Key已过期"
+                        else -> "网络请求失败"
+                    }
+                    
+                    throw Exception("API请求失败：${response?.code} - $errorType ($errorDetails)")
                 }
             }
         )

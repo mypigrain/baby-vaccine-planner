@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -28,6 +29,14 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.tween
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,6 +63,7 @@ fun VaccineScheduleScreen(
     var showAIAnalysisMenu by remember { mutableStateOf(false) }
     
     val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
     
     LaunchedEffect(savedScrollPosition) {
         if (savedScrollPosition > 0) {
@@ -331,13 +341,37 @@ fun VaccineScheduleScreen(
     }
     
     if (showAIAnalysisMenu) {
-        AIAnalysisTypeDialog(
-            onDismiss = { showAIAnalysisMenu = false },
-            onOverallAnalysis = onAIOverallAnalysis,
-            onCurrentMonthAnalysis = onAICurrentMonthAnalysis,
-            onVaccineInfoQuery = onAIVaccineInfoQuery,
-            onNavigateToSettings = onNavigateToAISettings
-        )
+        AnimatedVisibility(
+            visible = showAIAnalysisMenu,
+            enter = fadeIn() + scaleIn(),
+            exit = fadeOut() + scaleOut()
+        ) {
+            AIAnalysisTypeDialog(
+                onDismiss = { showAIAnalysisMenu = false },
+                onOverallAnalysis = {
+                    showAIAnalysisMenu = false
+                    onAIOverallAnalysis()
+                },
+                onCurrentMonthAnalysis = {
+                    showAIAnalysisMenu = false
+                    onAICurrentMonthAnalysis()
+                },
+                onVaccineInfoQuery = {
+                    showAIAnalysisMenu = false
+                    coroutineScope.launch {
+                        kotlinx.coroutines.delay(100) // Wait for exit animation
+                        onAIVaccineInfoQuery()
+                    }
+                },
+                onNavigateToSettings = {
+                    showAIAnalysisMenu = false
+                    coroutineScope.launch {
+                        kotlinx.coroutines.delay(100) // Wait for exit animation
+                        onNavigateToAISettings()
+                    }
+                }
+            )
+        }
     }
 }
 

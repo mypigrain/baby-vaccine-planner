@@ -15,8 +15,10 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,7 +29,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.foundation.layout.Box
 import kotlinx.coroutines.launch
 import com.vaccineplanner.ui.components.VaccineSelectionDialog
 import com.vaccineplanner.ui.screens.*
@@ -72,6 +73,9 @@ class MainActivity : ComponentActivity() {
                     var analysisType by remember { mutableStateOf<String?>(null) }
                     
                     val coroutineScope = rememberCoroutineScope()
+                    var showErrorDialog by remember { mutableStateOf(false) }
+                    var errorMessage by remember { mutableStateOf("") }
+                    var shouldShowConfigButton by remember { mutableStateOf(false) }
                     
                     val backPressHandler = {
                         when (currentScreen) {
@@ -251,10 +255,24 @@ class MainActivity : ComponentActivity() {
                     
                     LaunchedEffect(analysisError) {
                         if (analysisError != null) {
-                            analysisError?.let {
+                            errorMessage = analysisError ?: "未知错误"
+                            
+                            // Check if error is related to API key
+                            shouldShowConfigButton = analysisError?.let { 
+                                it.contains("API Key") || 
+                                it.contains("401") || 
+                                it.contains("invalid") || 
+                                it.contains("expired") ||
+                                it.contains("请先配置")
+                            } ?: false
+                            
+                            if (shouldShowConfigButton) {
+                                showErrorDialog = true
+                            } else {
+                                // Show toast for other errors
                                 android.widget.Toast.makeText(
                                     this@MainActivity,
-                                    it,
+                                    errorMessage,
                                     android.widget.Toast.LENGTH_LONG
                                 ).show()
                                 viewModel.clearAnalysisError()
@@ -267,13 +285,47 @@ class MainActivity : ComponentActivity() {
                             vaccines = viewModel.getPaidVaccines(),
                             onDismiss = { showVaccineSelectionDialog = false },
                             onVaccineSelected = { vaccine ->
-                                analysisType = "vaccineInfo"
-                                viewModel.navigateTo(Screen.AIAnalysisResult)
+                                // Close dialog first, then navigate after animation completes
                                 showVaccineSelectionDialog = false
                                 coroutineScope.launch {
+                                    kotlinx.coroutines.delay(100) // Wait for dialog dismiss animation
+                                    analysisType = "vaccineInfo"
+                                    viewModel.navigateTo(Screen.AIAnalysisResult)
                                     viewModel.performVaccineInfoQuery(vaccine)
                                 }
                             }
+                        )
+                    }
+                    
+                    if (showErrorDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showErrorDialog = false; viewModel.clearAnalysisError() },
+                            icon = {
+                                Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                            },
+                            title = { Text("API Key配置错误") },
+                            text = {
+                                Text(errorMessage)
+                            },
+                            confirmButton = {
+                                TextButton(onClick = { 
+                                    showErrorDialog = false
+                                    viewModel.clearAnalysisError()
+                                }) {
+                                    Text("确定")
+                                }
+                            },
+                            dismissButton = if (shouldShowConfigButton) {
+                                {
+                                    TextButton(onClick = { 
+                                        showErrorDialog = false
+                                        viewModel.clearAnalysisError()
+                                        viewModel.navigateTo(Screen.AISettings)
+                                    }) {
+                                        Text("前往配置")
+                                    }
+                                }
+                            } else null
                         )
                     }
                 }

@@ -1,5 +1,13 @@
 package com.vaccineplanner.ui.components
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -79,12 +87,23 @@ fun VaccinationCard(
                     .background(typeColor.copy(alpha = 0.2f)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = if (record.isCompleted) Icons.Default.CheckCircle else Icons.Default.Shield,
-                    contentDescription = null,
-                    tint = if (record.isCompleted) Color(0xFF4CAF50) else typeColor,
-                    modifier = Modifier.size(18.dp)
-                )
+                AnimatedContent(
+                    targetState = record.isCompleted,
+                    transitionSpec = {
+                        (fadeIn(animationSpec = tween(durationMillis = 200)) + 
+                         scaleIn(animationSpec = tween(durationMillis = 200))) togetherWith
+                        (fadeOut(animationSpec = tween(durationMillis = 200)) + 
+                         scaleOut(animationSpec = tween(durationMillis = 200)))
+                    },
+                    label = "statusIcon"
+                ) { isCompleted ->
+                    Icon(
+                        imageVector = if (isCompleted) Icons.Default.CheckCircle else Icons.Default.Shield,
+                        contentDescription = null,
+                        tint = if (isCompleted) Color(0xFF4CAF50) else typeColor,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             }
             
             Spacer(modifier = Modifier.width(8.dp))

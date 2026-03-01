@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.OnBackPressedCallback
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -67,8 +68,7 @@ class MainActivity : ComponentActivity() {
                                 viewModel.navigateTo(Screen.VaccineSchedule)
                             }
                             is Screen.VaccineDetail -> {
-                                viewModel.selectVaccineForDetail(null)
-                                viewModel.navigateTo(viewModel.detailSourceScreen.value ?: Screen.VaccineSchedule)
+                                viewModel.navigateTo(Screen.VaccineSchedule)
                             }
                         }
                     }
@@ -82,10 +82,11 @@ class MainActivity : ComponentActivity() {
                     AnimatedContent(
                         targetState = currentScreen,
                         transitionSpec = {
-                            (fadeIn(animationSpec = tween(300)) + androidx.compose.animation.scaleIn(initialScale = 0.95f, animationSpec = tween(300)))
-                                .togetherWith(fadeOut(animationSpec = tween(300)) + androidx.compose.animation.scaleOut(targetScale = 0.95f, animationSpec = tween(300)))
+                            val direction = if (initialState.ordinal < targetState.ordinal) 1 else -1
+                            (slideInHorizontally { width -> direction * width } + fadeIn(animationSpec = tween(durationMillis = 350)))
+                                .togetherWith(slideOutHorizontally { width -> -direction * width } + fadeOut(animationSpec = tween(durationMillis = 350)))
                         },
-                        contentKey = { it.ordinal },
+                        contentKey = { it.javaClass.simpleName },
                         label = "screen_transition"
                     ) { screen ->
                         when (screen) {
@@ -147,10 +148,10 @@ class MainActivity : ComponentActivity() {
                                     isSelected = viewModel.isPaidVaccineSelected(vaccine.id),
                                     onAddToSchedule = { viewModel.addPaidVaccine(vaccine) },
                                     onRemoveFromSchedule = { viewModel.removePaidVaccine(vaccine) },
-                                    onNavigateBack = { 
+                                     onNavigateBack = { 
                                         viewModel.selectVaccineForDetail(null)
-                                        viewModel.navigateTo(viewModel.detailSourceScreen.value ?: Screen.VaccineSchedule)
-                                    }
+                                        viewModel.navigateTo(Screen.VaccineSchedule)
+                                     }
                                 )
                             }
                         }

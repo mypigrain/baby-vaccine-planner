@@ -6,8 +6,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.OnBackPressedCallback
-import androidx.compose.animation.Crossfade
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -74,9 +79,13 @@ class MainActivity : ComponentActivity() {
                         }
                     })
                     
-                    Crossfade(
+                    AnimatedContent(
                         targetState = currentScreen,
-                        animationSpec = tween(300),
+                        transitionSpec = {
+                            (fadeIn(animationSpec = tween(300)) + androidx.compose.animation.scaleIn(initialScale = 0.95f, animationSpec = tween(300)))
+                                .togetherWith(fadeOut(animationSpec = tween(300)) + androidx.compose.animation.scaleOut(targetScale = 0.95f, animationSpec = tween(300)))
+                        },
+                        contentKey = { it.ordinal },
                         label = "screen_transition"
                     ) { screen ->
                         when (screen) {

@@ -120,22 +120,24 @@ fun VaccinationCard(
                         maxLines = 1,
                         modifier = Modifier.weight(1f, fill = false)
                     )
-                    TextButton(
+                    Spacer(modifier = Modifier.width(8.dp))
+                    OutlinedButton(
                         onClick = onInfoClick,
-                        contentPadding = PaddingValues(horizontal = 2.dp, vertical = 0.dp),
-                        modifier = Modifier.height(20.dp)
+                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp),
+                        modifier = Modifier.height(20.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.primary
+                        )
                     ) {
                         Icon(
                             imageVector = Icons.Default.Info,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(12.dp)
                         )
                         Spacer(modifier = Modifier.width(1.dp))
                         Text(
                             text = "介绍",
-                            fontSize = 10.sp,
-                            color = MaterialTheme.colorScheme.primary
+                            fontSize = 10.sp
                         )
                     }
                 }

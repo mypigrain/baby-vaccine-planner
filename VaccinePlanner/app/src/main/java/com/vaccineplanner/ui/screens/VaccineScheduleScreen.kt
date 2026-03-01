@@ -181,9 +181,8 @@ fun VaccineScheduleScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
                     .padding(horizontal = 12.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 FilterChip(
                     selected = showCurrentMonthOnly,
@@ -195,10 +194,13 @@ fun VaccineScheduleScreen(
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
-                    }
+                    },
+                    modifier = Modifier.weight(1f)
                 )
                 
-                Box {
+                Box(
+                    modifier = Modifier.weight(1f)
+                ) {
                     FilterChip(
                         selected = selectedFilter != "全部",
                         onClick = { showFilterMenu = true },
@@ -216,7 +218,8 @@ fun VaccineScheduleScreen(
                                 contentDescription = null,
                                 modifier = Modifier.size(18.dp)
                             )
-                        }
+                        },
+                        modifier = Modifier.fillMaxWidth()
                     )
                     
                     DropdownMenu(
@@ -256,7 +259,8 @@ fun VaccineScheduleScreen(
                     },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = MaterialTheme.colorScheme.errorContainer
-                    )
+                    ),
+                    modifier = Modifier.weight(1f)
                 )
             }
             

@@ -151,6 +151,7 @@ object DeepSeekService {
         
         var fullContent = ""
         var completed = false
+        var errorMessage: String? = null
         
         val eventSource = EventSources.createFactory(client).newEventSource(
             Request.Builder()
@@ -212,7 +213,8 @@ object DeepSeekService {
                         else -> "网络请求失败"
                     }
                     
-                    throw Exception("API请求失败：${response?.code} - $errorType ($errorDetails)")
+                    errorMessage = "API请求失败：${response?.code} - $errorType ($errorDetails)"
+                    completed = true
                 }
             }
         )
@@ -220,6 +222,11 @@ object DeepSeekService {
         // Wait for completion
         while (!completed) {
             kotlinx.coroutines.delay(100)
+        }
+        
+        // Check if there was an error
+        if (errorMessage != null) {
+            throw Exception(errorMessage)
         }
         
         fullContent

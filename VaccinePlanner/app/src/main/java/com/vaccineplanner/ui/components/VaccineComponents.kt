@@ -217,7 +217,7 @@ fun VaccineInfoCard(
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) typeColor.copy(alpha = 0.1f) else Color.White
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         border = null
     ) {
         Row(
@@ -273,6 +273,7 @@ fun VaccineInfoCard(
                 Text(
                     text = vaccine.description,
                     fontSize = 12.sp,
+                    lineHeight = (12 * 1.1).sp,
                     color = Color.Gray
                 )
                 

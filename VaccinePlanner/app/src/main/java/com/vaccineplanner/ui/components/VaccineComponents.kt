@@ -1,5 +1,6 @@
 package com.vaccineplanner.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.dp
 import com.vaccineplanner.data.model.VaccinationRecord
 import com.vaccineplanner.data.model.Vaccine
 import com.vaccineplanner.data.model.VaccineType
@@ -216,18 +218,19 @@ fun VaccineInfoCard(
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) typeColor.copy(alpha = 0.1f) else Color.White
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = BorderStroke(width = 1.dp, color = if (isSelected) typeColor else Color(0xFFE0E0E0))
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .size(42.dp)
+                    .clip(RoundedCornerShape(6.dp))
                     .background(typeColor.copy(alpha = 0.2f)),
                 contentAlignment = Alignment.Center
             ) {
@@ -235,11 +238,11 @@ fun VaccineInfoCard(
                     imageVector = if (vaccine.isFree) Icons.Default.CheckCircle else Icons.Default.HealthAndSafety,
                     contentDescription = null,
                     tint = typeColor,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
             
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(10.dp))
             
             Column(modifier = Modifier.weight(1f)) {
                 Row(
@@ -249,28 +252,28 @@ fun VaccineInfoCard(
                     Text(
                         text = vaccine.chineseName,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
+                        fontSize = 14.sp,
                         maxLines = 1,
                         modifier = Modifier.weight(1f, fill = false)
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(5.dp))
                     if (showPaidBadge) {
                         Text(
                             text = "自费",
                             fontSize = 10.sp,
                             color = typeColor,
                             modifier = Modifier
-                                .background(typeColor.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
-                                .padding(horizontal = 5.dp, vertical = 2.dp)
+                                .background(typeColor.copy(alpha = 0.1f), RoundedCornerShape(3.dp))
+                                .padding(horizontal = 4.dp, vertical = 2.dp)
                         )
                     }
                 }
                 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(3.dp))
                 
                 Text(
                     text = vaccine.description,
-                    fontSize = 13.sp,
+                    fontSize = 12.sp,
                     color = Color.Gray
                 )
                 

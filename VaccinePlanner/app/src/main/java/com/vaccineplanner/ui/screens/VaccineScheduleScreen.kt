@@ -11,6 +11,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.runtime.*
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -114,9 +115,19 @@ fun VaccineScheduleScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("${baby.name}的接种计划") },
+                title = { 
+                    Text(
+                        "${baby.name}的接种计划",
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
                 actions = {
-                    TextButton(onClick = onNavigateToDonate) {
+                    TextButton(
+                        onClick = onNavigateToDonate,
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    ) {
                         Icon(
                             Icons.Default.Favorite,
                             contentDescription = "捐赠",
@@ -131,7 +142,10 @@ fun VaccineScheduleScreen(
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
-                    TextButton(onClick = { showAIAnalysisMenu = true }) {
+                    TextButton(
+                        onClick = { showAIAnalysisMenu = true },
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    ) {
                         Icon(
                             Icons.Default.Psychology,
                             contentDescription = "AI分析",

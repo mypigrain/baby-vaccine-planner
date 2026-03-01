@@ -168,6 +168,7 @@ class VaccineViewModel(application: Application) : AndroidViewModel(application)
     }
     
     fun navigateToDetail(fromScreen: Screen, vaccine: Vaccine) {
+        _detailSourceScreen.value = fromScreen
         _previousScreen.value = fromScreen
         _selectedVaccineForDetail.value = vaccine
         _currentScreen.value = Screen.VaccineDetail

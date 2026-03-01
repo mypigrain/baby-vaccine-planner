@@ -218,8 +218,7 @@ fun VaccineInfoCard(
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) typeColor.copy(alpha = 0.1f) else Color.White
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        border = BorderStroke(width = 1.dp, color = if (isSelected) typeColor else Color(0xFFE0E0E0))
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier

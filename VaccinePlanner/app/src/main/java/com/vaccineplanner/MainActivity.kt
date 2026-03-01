@@ -68,7 +68,7 @@ class MainActivity : ComponentActivity() {
                                 viewModel.navigateTo(Screen.VaccineSchedule)
                             }
                             is Screen.VaccineDetail -> {
-                                viewModel.navigateTo(Screen.VaccineSchedule)
+                                viewModel.navigateTo(viewModel.detailSourceScreen.value ?: Screen.VaccineSchedule)
                             }
                         }
                     }
@@ -148,10 +148,10 @@ class MainActivity : ComponentActivity() {
                                     isSelected = viewModel.isPaidVaccineSelected(vaccine.id),
                                     onAddToSchedule = { viewModel.addPaidVaccine(vaccine) },
                                     onRemoveFromSchedule = { viewModel.removePaidVaccine(vaccine) },
-                                     onNavigateBack = { 
+                                    onNavigateBack = { 
                                         viewModel.selectVaccineForDetail(null)
-                                        viewModel.navigateTo(Screen.VaccineSchedule)
-                                     }
+                                        viewModel.navigateTo(viewModel.detailSourceScreen.value ?: Screen.VaccineSchedule)
+                                    }
                                 )
                             }
                         }

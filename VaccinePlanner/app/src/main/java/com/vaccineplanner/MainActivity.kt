@@ -6,6 +6,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.OnBackPressedCallback
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -45,6 +52,7 @@ class MainActivity : ComponentActivity() {
                     val selectedPaidVaccines by viewModel.selectedPaidVaccines.collectAsState()
                     val currentScreen by viewModel.currentScreen.collectAsState()
                     val selectedVaccineForDetail by viewModel.selectedVaccineForDetail.collectAsState()
+                    val navigationDirection by viewModel.navigationDirection.collectAsState()
                     
                     var mainListState by remember { mutableStateOf(mapOf<String, Int>()) }
                     
@@ -72,7 +80,22 @@ class MainActivity : ComponentActivity() {
                         }
                     })
                     
-                    when (currentScreen) {
+                    AnimatedContent(
+                        targetState = currentScreen,
+                        transitionSpec = {
+                            val isDetailTransition = initialState is Screen.VaccineDetail || targetState is Screen.VaccineDetail
+                            if (isDetailTransition) {
+                                (fadeIn(animationSpec = tween(300)))
+                                    .togetherWith(fadeOut(animationSpec = tween(300)))
+                            } else {
+                                val direction = navigationDirection
+                                (slideInHorizontally { width -> direction * width } + fadeIn(animationSpec = tween(300)))
+                                    .togetherWith(slideOutHorizontally { width -> -direction * width } + fadeOut(animationSpec = tween(300)))
+                            }
+                        },
+                        label = "screen_transition"
+                    ) { screen ->
+                        when (screen) {
                         is Screen.BabyInfo -> {
                             BabyInfoScreen(
                                 onSubmit = { name, birthDate ->
@@ -138,6 +161,7 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         }
+                    }
                     }
                 }
             }

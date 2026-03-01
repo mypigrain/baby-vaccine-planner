@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 
+    DeepSeek API 配置
+    获取API密钥：https://platform.deepseek.com/
+    
+    使用方法：
+    1. 将本文件复制为 api_config.xml
+    2. 将你的API密钥填入下面的值中
+    3. 或者直接在应用内的AI设置页面配置
+    -->
+    <string name="deepseek_api_key">your_api_key_here</string>
+</resources>

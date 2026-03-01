@@ -54,7 +54,7 @@ class MainActivity : ComponentActivity() {
                                 finish()
                             }
                             is Screen.VaccineSchedule -> {
-                                finish()
+                                moveTaskToBack(true)
                             }
                             is Screen.PaidVaccineList -> {
                                 viewModel.navigateTo(Screen.VaccineSchedule)

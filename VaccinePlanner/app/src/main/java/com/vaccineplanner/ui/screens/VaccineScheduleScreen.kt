@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.vaccineplanner.data.model.Baby
 import com.vaccineplanner.data.model.VaccinationRecord
 import com.vaccineplanner.data.model.Vaccine
@@ -102,10 +103,11 @@ fun VaccineScheduleScreen(
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = onNavigateToPaidVaccines,
-                icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                text = { Text("添加自费疫苗") },
+                icon = { Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                text = { Text("添加自费疫苗", fontSize = 13.sp) },
                 containerColor = PaidVaccineOrange,
-                contentColor = MaterialTheme.colorScheme.onPrimary
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.height(40.dp)
             )
         }
     ) { paddingValues ->
@@ -263,6 +265,7 @@ fun VaccineScheduleScreen(
                     } else 0
                     val isCurrentOrPast = monthIndex <= babyCurrentMonthIndex
                     val isOverdueMonth = records.any { !it.isCompleted && isOverdue(it.scheduledDate, today, baby.birthDate) }
+                    val sortedRecords = records.sortedByDescending { it.isCompleted }
                     
                     item {
                         MonthHeader(
@@ -275,7 +278,7 @@ fun VaccineScheduleScreen(
                         )
                     }
                     
-                    items(records, key = { it.id }) { record ->
+                    items(sortedRecords, key = { it.id }) { record ->
                         VaccinationCard(
                             record = record,
                             babyBirthDate = baby.birthDate,

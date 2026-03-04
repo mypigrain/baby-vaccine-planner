@@ -204,7 +204,8 @@ VaccinePlannerTheme(
 
 如果你觉得这个软件不错的话，谢谢你请我喝可乐~
 
-![捐赠二维码](screenshots/donate.jpg)
+![微信捐赠二维码](screenshots/wechat_donate.png)
+![支付宝捐赠二维码](screenshots/al_donate.jpg)
 
 您的支持是我持续改进应用的动力！所有捐赠将用于：
 - 服务器和维护成本

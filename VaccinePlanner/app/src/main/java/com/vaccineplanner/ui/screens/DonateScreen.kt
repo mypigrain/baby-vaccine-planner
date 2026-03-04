@@ -85,28 +85,66 @@ fun DonateScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(24.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
                     verticalArrangement = Arrangement.spacedBy(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "捐赠二维码",
+                        text = "微信捐赠二维码",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center
                     )
                     
                     Image(
-                        painter = painterResource(id = R.drawable.donate_qr),
-                        contentDescription = "捐赠二维码",
+                        painter = painterResource(id = R.drawable.wechat_donate),
+                        contentDescription = "微信捐赠二维码",
                         modifier = Modifier
-                            .size(280.dp)
+                            .size(200.dp)
                             .padding(8.dp),
                         contentScale = ContentScale.Fit
                     )
                     
                     Text(
                         text = "使用微信扫描二维码进行捐赠",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "支付宝捐赠二维码",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                    
+                    Image(
+                        painter = painterResource(id = R.drawable.al_donate),
+                        contentDescription = "支付宝捐赠二维码",
+                        modifier = Modifier
+                            .size(200.dp)
+                            .padding(8.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                    
+                    Text(
+                        text = "使用支付宝扫描二维码进行捐赠",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                         textAlign = TextAlign.Center

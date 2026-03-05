@@ -131,10 +131,12 @@ class MainActivity : ComponentActivity() {
                         
                         is Screen.VaccineSchedule -> {
                             if (baby != null) {
+                                val currentDate by viewModel.currentDate.collectAsState()
                                 VaccineScheduleScreen(
                                     baby = baby!!,
                                     schedules = schedules,
                                     selectedPaidVaccines = selectedPaidVaccines,
+                                    currentDate = currentDate,
                                     onMarkCompleted = { viewModel.markVaccinationCompleted(it) },
                                     onMarkIncomplete = { viewModel.markVaccinationIncomplete(it) },
                                     onNavigateToPaidVaccines = { viewModel.navigateTo(Screen.PaidVaccineList) },

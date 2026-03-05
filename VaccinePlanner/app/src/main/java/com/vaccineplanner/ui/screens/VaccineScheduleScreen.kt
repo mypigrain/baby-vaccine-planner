@@ -26,6 +26,7 @@ import com.vaccineplanner.ui.components.AIAnalysisTypeDialog
 import com.vaccineplanner.ui.components.VaccinationCard
 import com.vaccineplanner.ui.theme.FreeVaccineGreen
 import com.vaccineplanner.ui.theme.PaidVaccineOrange
+import com.vaccineplanner.viewmodel.VaccineViewModel
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -45,6 +46,7 @@ fun VaccineScheduleScreen(
     baby: Baby,
     schedules: List<VaccinationRecord>,
     selectedPaidVaccines: List<Vaccine>,
+    currentDate: LocalDate,
     onMarkCompleted: (String) -> Unit,
     onMarkIncomplete: (String) -> Unit,
     onNavigateToPaidVaccines: () -> Unit,
@@ -79,37 +81,73 @@ fun VaccineScheduleScreen(
         }
     }
     
-    val totalPaidPrice = selectedPaidVaccines.sumOf { it.price * it.doses }
-    val today = LocalDate.now()
-    val babyAgeInDays = ChronoUnit.DAYS.between(baby.birthDate, today).toInt()
+    val totalPaidPrice by remember(selectedPaidVaccines) {
+        derivedStateOf { selectedPaidVaccines.sumOf { it.price * it.doses } }
+    }
+    
+    val babyAgeInDays = ChronoUnit.DAYS.between(baby.birthDate, currentDate).toInt()
     val babyCurrentMonthIndex = babyAgeInDays / 30
     
-    val overdueSchedules = schedules.filter { 
-        !it.isCompleted && isOverdue(it.scheduledDate, today, baby.birthDate) 
+    val overdueSchedules by remember(schedules, currentDate, baby.birthDate) {
+        derivedStateOf {
+            schedules.filter { 
+                !it.isCompleted && isOverdue(it.scheduledDate, currentDate, baby.birthDate) 
+            }
+        }
     }
     
-    val currentMonthVaccineSchedules = schedules.filter { record ->
-        val daysDiff = ChronoUnit.DAYS.between(baby.birthDate, record.scheduledDate).toInt()
-        val vaccineMonthIndex = if (daysDiff < 30) -1 else daysDiff / 30
-        vaccineMonthIndex == babyCurrentMonthIndex
+    val currentMonthVaccineSchedules by remember(schedules, currentDate, baby.birthDate, babyCurrentMonthIndex) {
+        derivedStateOf {
+            schedules.filter { record ->
+                val daysDiff = ChronoUnit.DAYS.between(baby.birthDate, record.scheduledDate).toInt()
+                val vaccineMonthIndex = if (daysDiff < 30) -1 else daysDiff / 30
+                vaccineMonthIndex == babyCurrentMonthIndex
+            }
+        }
     }
     
-    val currentMonthWithOverdueSchedules = (currentMonthVaccineSchedules + overdueSchedules).distinctBy { it.id }
-    
-    val filteredSchedules = when (selectedFilter) {
-        "全部" -> if (showCurrentMonthOnly) currentMonthWithOverdueSchedules else schedules
-        "待接种" -> (if (showCurrentMonthOnly) currentMonthWithOverdueSchedules else schedules).filter { !it.isCompleted }
-        "已完成" -> schedules.filter { it.isCompleted }
-        "免费" -> schedules.filter { it.vaccine.isFree }
-        "自费" -> schedules.filter { !it.vaccine.isFree }
-        else -> schedules
+    val currentMonthWithOverdueSchedules by remember(currentMonthVaccineSchedules, overdueSchedules) {
+        derivedStateOf {
+            (currentMonthVaccineSchedules + overdueSchedules).distinctBy { it.id }
+        }
     }
     
-    val groupedSchedules = filteredSchedules.groupBy { record ->
-        getVaccineMonthGroup(record.scheduledDate, baby.birthDate)
-    }.toSortedMap(compareBy<Pair<String, YearMonth?>>({ it.second != null }).thenBy { it.second ?: YearMonth.of(1970, 1) })
+    val filteredSchedules by remember(selectedFilter, showCurrentMonthOnly, schedules, currentDate, currentMonthWithOverdueSchedules) {
+        derivedStateOf {
+            when (selectedFilter) {
+                "全部" -> if (showCurrentMonthOnly) currentMonthWithOverdueSchedules else schedules
+                "待接种" -> (if (showCurrentMonthOnly) currentMonthWithOverdueSchedules else schedules).filter { !it.isCompleted }
+                "已完成" -> schedules.filter { it.isCompleted }
+                "免费" -> schedules.filter { it.vaccine.isFree }
+                "自费" -> schedules.filter { !it.vaccine.isFree }
+                else -> schedules
+            }
+        }
+    }
     
-    val completedCount = schedules.count { it.isCompleted }
+    val groupedSchedules by remember(filteredSchedules, baby.birthDate) {
+        derivedStateOf {
+            filteredSchedules.groupBy { record ->
+                getVaccineMonthGroup(record.scheduledDate, baby.birthDate)
+            }.toSortedMap(compareBy<Pair<String, YearMonth?>>({ it.second != null }).thenBy { it.second ?: YearMonth.of(1970, 1) })
+        }
+    }
+    
+    val sortedRecordsByMonth by remember(groupedSchedules, currentDate, baby.birthDate) {
+        derivedStateOf {
+            groupedSchedules.mapValues { (_, records) ->
+                val overdueMap = records.associateWith { 
+                    !it.isCompleted && isOverdue(it.scheduledDate, currentDate, baby.birthDate) 
+                }
+                val hasOverdue = overdueMap.values.any { it }
+                Pair(records.sortedByDescending { it.isCompleted }, hasOverdue)
+            }
+        }
+    }
+    
+    val completedCount by remember(schedules) {
+        derivedStateOf { schedules.count { it.isCompleted } }
+    }
     val totalCount = schedules.size
     
     Scaffold(
@@ -370,21 +408,20 @@ fun VaccineScheduleScreen(
                 groupedSchedules.forEach { (monthGroup, records) ->
                     val monthLabel = monthGroup.first
                     val month = monthGroup.second
+                    val (sortedRecords, hasOverdue) = sortedRecordsByMonth[monthGroup] ?: Pair(emptyList(), false)
                     val monthIndex = if (monthLabel == "出生时") {
                         -1
                     } else if (month != null) {
                         ChronoUnit.MONTHS.between(baby.birthDate.withDayOfMonth(1), month.atDay(1)).toInt()
                     } else 0
                     val isCurrentOrPast = monthIndex <= babyCurrentMonthIndex
-                    val isOverdueMonth = records.any { !it.isCompleted && isOverdue(it.scheduledDate, today, baby.birthDate) }
-                    val sortedRecords = records.sortedByDescending { it.isCompleted }
                     
                     item {
                         MonthHeader(
                             monthLabel = monthLabel,
                             monthIndex = monthIndex,
                             isCurrentOrPast = isCurrentOrPast,
-                            hasOverdue = isOverdueMonth,
+                            hasOverdue = hasOverdue,
                             completedCount = records.count { it.isCompleted },
                             totalCount = records.size
                         )
@@ -394,6 +431,7 @@ fun VaccineScheduleScreen(
                         VaccinationCard(
                             record = record,
                             babyBirthDate = baby.birthDate,
+                            currentDate = currentDate,
                             onMarkCompleted = onMarkCompleted,
                             onMarkIncomplete = onMarkIncomplete,
                             onClick = { onNavigateToVaccineDetail(record.vaccine) },

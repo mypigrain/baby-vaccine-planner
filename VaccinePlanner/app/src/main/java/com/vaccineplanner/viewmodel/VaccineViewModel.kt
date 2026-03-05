@@ -11,9 +11,11 @@ import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 import com.vaccineplanner.data.model.*
 import com.vaccineplanner.data.repository.VaccineRepository
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.io.File
 import java.time.LocalDate
@@ -88,9 +90,25 @@ class VaccineViewModel(application: Application) : AndroidViewModel(application)
     private val _analysisError = MutableStateFlow<String?>(null)
     val analysisError: StateFlow<String?> = _analysisError.asStateFlow()
     
+    private val _currentDate = MutableStateFlow<LocalDate>(LocalDate.now())
+    val currentDate: StateFlow<LocalDate> = _currentDate.asStateFlow()
+    
     init {
         loadApiConfig()
         loadData()
+        startDateUpdater()
+    }
+    
+    private fun startDateUpdater() {
+        viewModelScope.launch {
+            while (isActive) {
+                val now = LocalDate.now()
+                val tomorrow = now.plusDays(1)
+                val millisUntilTomorrow = java.time.Duration.between(now.atStartOfDay(), tomorrow.atStartOfDay()).toMillis()
+                delay(millisUntilTomorrow)
+                _currentDate.value = LocalDate.now()
+            }
+        }
     }
     
     fun setBabyInfo(name: String, birthDate: LocalDate) {

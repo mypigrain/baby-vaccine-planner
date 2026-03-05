@@ -37,6 +37,7 @@ import java.time.temporal.ChronoUnit
 fun VaccinationCard(
     record: VaccinationRecord,
     babyBirthDate: LocalDate,
+    currentDate: LocalDate,
     onMarkCompleted: (String) -> Unit,
     onMarkIncomplete: (String) -> Unit,
     onClick: () -> Unit = {},
@@ -46,11 +47,11 @@ fun VaccinationCard(
     val vaccine = record.vaccine
     val isPaid = !vaccine.isFree
     
-    val cardData = remember(record.id, record.isCompleted, record.scheduledDate, babyBirthDate) {
+    val cardData = remember(record.id, record.isCompleted, record.scheduledDate, babyBirthDate, currentDate) {
         val daysDiff = ChronoUnit.DAYS.between(babyBirthDate, record.scheduledDate).toInt()
         val monthIndex = daysDiff / 30
         val deadline = babyBirthDate.plusDays(((monthIndex + 1) * 30).toLong())
-        val isOverdue = !record.isCompleted && LocalDate.now().isAfter(deadline)
+        val isOverdue = !record.isCompleted && currentDate.isAfter(deadline)
         
         val color = when {
             record.isCompleted -> Color(0xFFE8F5E9)

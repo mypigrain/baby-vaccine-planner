@@ -101,6 +101,15 @@ class VaccineViewModel(application: Application) : AndroidViewModel(application)
     private val _isScheduleLoading = MutableStateFlow(true)
     val isScheduleLoading: StateFlow<Boolean> = _isScheduleLoading.asStateFlow()
     
+    private val _selectedFilter = MutableStateFlow("全部")
+    val selectedFilter: StateFlow<String> = _selectedFilter.asStateFlow()
+    
+    private val _showCurrentMonthOnly = MutableStateFlow(false)
+    val showCurrentMonthOnly: StateFlow<Boolean> = _showCurrentMonthOnly.asStateFlow()
+    
+    private val _processedSchedule = MutableStateFlow<ProcessedSchedule?>(null)
+    val processedSchedule: StateFlow<ProcessedSchedule?> = _processedSchedule.asStateFlow()
+    
     init {
         loadApiConfig()
         loadData()
@@ -167,7 +176,74 @@ class VaccineViewModel(application: Application) : AndroidViewModel(application)
             totalCount = schedules.size,
             computedDate = currentDate
         )
-        _isScheduleLoading.value = false
+        
+        processScheduleData()
+    }
+    
+    private fun processScheduleData() {
+        val baby = _baby.value ?: return
+        val cache = _scheduleCache.value ?: return
+        val currentDate = _currentDate.value
+        val filter = _selectedFilter.value
+        val showCurrentMonthOnly = _showCurrentMonthOnly.value
+        val selectedPaidVaccines = _selectedPaidVaccines.value
+        
+        val babyAgeInDays = ChronoUnit.DAYS.between(baby.birthDate, currentDate).toInt()
+        val babyCurrentMonthIndex = babyAgeInDays / 30
+        
+        val overdueSchedules = cache.groupedSchedules.values.flatten().filter { 
+            !it.isCompleted && isOverdue(it.scheduledDate, currentDate, baby.birthDate) 
+        }
+        
+        val currentMonthVaccineSchedules = cache.groupedSchedules.values.flatten().filter { record ->
+            val daysDiff = ChronoUnit.DAYS.between(baby.birthDate, record.scheduledDate).toInt()
+            val vaccineMonthIndex = if (daysDiff < 30) -1 else daysDiff / 30
+            vaccineMonthIndex == babyCurrentMonthIndex
+        }
+        
+        val currentMonthWithOverdueSchedules = (currentMonthVaccineSchedules + overdueSchedules).distinctBy { it.id }
+        
+        val allRecords = cache.groupedSchedules.values.flatten()
+        
+        val filteredRecords = when (filter) {
+            "全部" -> if (showCurrentMonthOnly) currentMonthWithOverdueSchedules else allRecords
+            "待接种" -> (if (showCurrentMonthOnly) currentMonthWithOverdueSchedules else allRecords).filter { !it.isCompleted }
+            "已完成" -> allRecords.filter { it.isCompleted }
+            "免费" -> allRecords.filter { it.vaccine.isFree }
+            "自费" -> allRecords.filter { !it.vaccine.isFree }
+            else -> allRecords
+        }
+        
+        val processedGrouped = filteredRecords
+            .groupBy { getVaccineMonthGroup(it.scheduledDate, baby.birthDate) }
+            .toSortedMap(compareBy<Pair<String, YearMonth?>>({ it.second != null }).thenBy { it.second ?: YearMonth.of(1970, 1) })
+            .mapValues { (_, records) ->
+                records.sortedByDescending { it.isCompleted }
+            }
+            .toSortedMap(compareBy<Pair<String, YearMonth?>>({ it.second != null }).thenBy { it.second ?: YearMonth.of(1970, 1) })
+        
+        val sortedRecordsByMonth = processedGrouped.mapValues { (_, records) ->
+            val hasOverdue = records.any { !it.isCompleted && isOverdue(it.scheduledDate, currentDate, baby.birthDate) }
+            Pair(records, hasOverdue)
+        }
+        
+        _processedSchedule.value = ProcessedSchedule(
+            groupedSchedules = processedGrouped,
+            sortedRecordsByMonth = sortedRecordsByMonth,
+            completedCount = cache.completedCount,
+            totalCount = cache.totalCount,
+            totalPaidPrice = selectedPaidVaccines.sumOf { it.price * it.doses }
+        )
+    }
+    
+    fun setFilter(filter: String) {
+        _selectedFilter.value = filter
+        processScheduleData()
+    }
+    
+    fun setShowCurrentMonthOnly(show: Boolean) {
+        _showCurrentMonthOnly.value = show
+        processScheduleData()
     }
     
     private fun getVaccineMonthGroup(scheduledDate: LocalDate, birthDate: LocalDate): Pair<String, java.time.YearMonth?> {
@@ -566,10 +642,13 @@ class VaccineViewModel(application: Application) : AndroidViewModel(application)
                         _currentScreen.value = Screen.VaccineSchedule
                     }
                     updateScheduleCache()
+                    delay(300)
                 }
                 loadAnalysisResults()
+                _isScheduleLoading.value = false
             } catch (e: Exception) {
                 e.printStackTrace()
+                _isScheduleLoading.value = false
             }
         }
     }
@@ -613,4 +692,12 @@ data class ScheduleCache(
     val completedCount: Int,
     val totalCount: Int,
     val computedDate: LocalDate
+)
+
+data class ProcessedSchedule(
+    val groupedSchedules: java.util.SortedMap<Pair<String, YearMonth?>, List<VaccinationRecord>>,
+    val sortedRecordsByMonth: Map<Pair<String, YearMonth?>, Pair<List<VaccinationRecord>, Boolean>>,
+    val completedCount: Int,
+    val totalCount: Int,
+    val totalPaidPrice: Double
 )

@@ -56,7 +56,6 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val baby by viewModel.baby.collectAsState()
-                    val schedules by viewModel.schedules.collectAsState()
                     val selectedPaidVaccines by viewModel.selectedPaidVaccines.collectAsState()
                     val currentScreen by viewModel.currentScreen.collectAsState()
                     val selectedVaccineForDetail by viewModel.selectedVaccineForDetail.collectAsState()
@@ -132,15 +131,19 @@ class MainActivity : ComponentActivity() {
                         is Screen.VaccineSchedule -> {
                             if (baby != null) {
                                 val currentDate by viewModel.currentDate.collectAsState()
-                                val scheduleCache by viewModel.scheduleCache.collectAsState()
+                                val processedSchedule by viewModel.processedSchedule.collectAsState()
+                                val selectedFilter by viewModel.selectedFilter.collectAsState()
+                                val showCurrentMonthOnly by viewModel.showCurrentMonthOnly.collectAsState()
                                 val isLoading by viewModel.isScheduleLoading.collectAsState()
                                 VaccineScheduleScreen(
                                     baby = baby!!,
-                                    schedules = schedules,
-                                    selectedPaidVaccines = selectedPaidVaccines,
                                     currentDate = currentDate,
-                                    scheduleCache = scheduleCache?.groupedSchedules,
+                                    processedSchedule = processedSchedule,
+                                    selectedFilter = selectedFilter,
+                                    showCurrentMonthOnly = showCurrentMonthOnly,
                                     isLoading = isLoading,
+                                    onFilterChange = { viewModel.setFilter(it) },
+                                    onShowCurrentMonthOnlyChange = { viewModel.setShowCurrentMonthOnly(it) },
                                     onMarkCompleted = { viewModel.markVaccinationCompleted(it) },
                                     onMarkIncomplete = { viewModel.markVaccinationIncomplete(it) },
                                     onNavigateToPaidVaccines = { viewModel.navigateTo(Screen.PaidVaccineList) },

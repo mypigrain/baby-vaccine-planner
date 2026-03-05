@@ -27,6 +27,7 @@ import com.vaccineplanner.ui.components.VaccinationCard
 import com.vaccineplanner.ui.theme.FreeVaccineGreen
 import com.vaccineplanner.ui.theme.PaidVaccineOrange
 import com.vaccineplanner.viewmodel.VaccineViewModel
+import com.vaccineplanner.viewmodel.ProcessedSchedule
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -44,11 +45,13 @@ import androidx.compose.animation.core.tween
 @Composable
 fun VaccineScheduleScreen(
     baby: Baby,
-    schedules: List<VaccinationRecord>,
-    selectedPaidVaccines: List<Vaccine>,
     currentDate: LocalDate,
-    scheduleCache: Map<Pair<String, java.time.YearMonth?>, List<VaccinationRecord>>?,
+    processedSchedule: ProcessedSchedule?,
+    selectedFilter: String,
+    showCurrentMonthOnly: Boolean,
     isLoading: Boolean,
+    onFilterChange: (String) -> Unit,
+    onShowCurrentMonthOnlyChange: (Boolean) -> Unit,
     onMarkCompleted: (String) -> Unit,
     onMarkIncomplete: (String) -> Unit,
     onNavigateToPaidVaccines: () -> Unit,
@@ -62,7 +65,7 @@ fun VaccineScheduleScreen(
     savedScrollPosition: Int = 0,
     onSaveScrollPosition: (Int) -> Unit = {}
 ) {
-    if (isLoading || scheduleCache == null) {
+    if (isLoading || processedSchedule == null) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -71,10 +74,14 @@ fun VaccineScheduleScreen(
         }
         return
     }
+    
+    val babyAgeInDays = ChronoUnit.DAYS.between(baby.birthDate, currentDate).toInt()
+    val babyCurrentMonthIndex = babyAgeInDays / 30
+    val groupedSchedules = processedSchedule.groupedSchedules
+    val sortedRecordsByMonth = processedSchedule.sortedRecordsByMonth
+    
     var showFilterMenu by remember { mutableStateOf(false) }
-    var selectedFilter by remember { mutableStateOf("全部") }
     var showResetDialog by remember { mutableStateOf(false) }
-    var showCurrentMonthOnly by remember { mutableStateOf(false) }
     var showAIAnalysisMenu by remember { mutableStateOf(false) }
     
     val listState = rememberLazyListState()
@@ -92,69 +99,9 @@ fun VaccineScheduleScreen(
         }
     }
     
-    val totalPaidPrice by remember(selectedPaidVaccines) {
-        derivedStateOf { selectedPaidVaccines.sumOf { it.price * it.doses } }
-    }
-    
-    val babyAgeInDays = ChronoUnit.DAYS.between(baby.birthDate, currentDate).toInt()
-    val babyCurrentMonthIndex = babyAgeInDays / 30
-    
-    val overdueSchedules = remember(scheduleCache, currentDate, baby.birthDate) {
-        scheduleCache.values.flatten().filter { 
-            !it.isCompleted && isOverdue(it.scheduledDate, currentDate, baby.birthDate) 
-        }
-    }
-    
-    val currentMonthVaccineSchedules = remember(scheduleCache, currentDate, baby.birthDate, babyCurrentMonthIndex) {
-        scheduleCache.values.flatten().filter { record ->
-            val daysDiff = ChronoUnit.DAYS.between(baby.birthDate, record.scheduledDate).toInt()
-            val vaccineMonthIndex = if (daysDiff < 30) -1 else daysDiff / 30
-            vaccineMonthIndex == babyCurrentMonthIndex
-        }
-    }
-    
-    val currentMonthWithOverdueSchedules = remember(currentMonthVaccineSchedules, overdueSchedules) {
-        (currentMonthVaccineSchedules + overdueSchedules).distinctBy { it.id }
-    }
-    
-    val filteredSchedules by remember(selectedFilter, showCurrentMonthOnly, scheduleCache, currentMonthWithOverdueSchedules) {
-        derivedStateOf {
-            val allRecords = scheduleCache.values.flatten()
-            when (selectedFilter) {
-                "全部" -> if (showCurrentMonthOnly) currentMonthWithOverdueSchedules else allRecords
-                "待接种" -> (if (showCurrentMonthOnly) currentMonthWithOverdueSchedules else allRecords).filter { !it.isCompleted }
-                "已完成" -> allRecords.filter { it.isCompleted }
-                "免费" -> allRecords.filter { it.vaccine.isFree }
-                "自费" -> allRecords.filter { !it.vaccine.isFree }
-                else -> allRecords
-            }
-        }
-    }
-    
-    val groupedSchedules by remember(filteredSchedules, baby.birthDate) {
-        derivedStateOf {
-            filteredSchedules.groupBy { record ->
-                getVaccineMonthGroup(record.scheduledDate, baby.birthDate)
-            }.toSortedMap(compareBy<Pair<String, YearMonth?>>({ it.second != null }).thenBy { it.second ?: YearMonth.of(1970, 1) })
-        }
-    }
-    
-    val sortedRecordsByMonth by remember(groupedSchedules, currentDate, baby.birthDate) {
-        derivedStateOf {
-            groupedSchedules.mapValues { (_, records) ->
-                val overdueMap = records.associateWith { 
-                    !it.isCompleted && isOverdue(it.scheduledDate, currentDate, baby.birthDate) 
-                }
-                val hasOverdue = overdueMap.values.any { it }
-                Pair(records.sortedByDescending { it.isCompleted }, hasOverdue)
-            }
-        }
-    }
-    
-    val completedCount by remember(schedules) {
-        derivedStateOf { schedules.count { it.isCompleted } }
-    }
-    val totalCount = schedules.size
+    val totalPaidPrice = processedSchedule.totalPaidPrice
+    val completedCount = processedSchedule.completedCount
+    val totalCount = processedSchedule.totalCount
     
     Scaffold(
         topBar = {
@@ -255,7 +202,7 @@ fun VaccineScheduleScreen(
             ) {
                 FilterChip(
                     selected = showCurrentMonthOnly,
-                    onClick = { showCurrentMonthOnly = !showCurrentMonthOnly },
+                    onClick = { onShowCurrentMonthOnlyChange(!showCurrentMonthOnly) },
                     label = { 
                         Box(
                             modifier = Modifier.fillMaxWidth(),
@@ -321,7 +268,7 @@ fun VaccineScheduleScreen(
                                     }
                                 },
                                 onClick = {
-                                    selectedFilter = filter
+                                    onFilterChange(filter)
                                     showFilterMenu = false
                                 }
                             )
@@ -499,24 +446,7 @@ fun VaccineScheduleScreen(
     }
 }
 
-private fun isOverdue(scheduledDate: LocalDate, today: LocalDate, birthDate: LocalDate): Boolean {
-    val daysSinceBirth = ChronoUnit.DAYS.between(birthDate, scheduledDate).toInt()
-    val monthIndex = daysSinceBirth / 30
-    val deadline = birthDate.plusDays(((monthIndex + 1) * 30).toLong())
-    return today.isAfter(deadline)
-}
 
-private fun getVaccineMonthGroup(scheduledDate: LocalDate, birthDate: LocalDate): Pair<String, YearMonth?> {
-    val daysDiff = ChronoUnit.DAYS.between(birthDate, scheduledDate).toInt()
-    
-    if (daysDiff < 30) {
-        return Pair("出生时", null)
-    }
-    
-    val monthIndex = daysDiff / 30
-    val month = YearMonth.from(birthDate).plusMonths(monthIndex.toLong())
-    return Pair("", month)
-}
 
 @Composable
 private fun MonthHeader(

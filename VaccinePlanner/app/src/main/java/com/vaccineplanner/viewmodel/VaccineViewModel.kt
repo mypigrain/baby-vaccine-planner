@@ -19,7 +19,9 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.io.File
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 class VaccineViewModel(application: Application) : AndroidViewModel(application) {
     
@@ -93,6 +95,12 @@ class VaccineViewModel(application: Application) : AndroidViewModel(application)
     private val _currentDate = MutableStateFlow<LocalDate>(LocalDate.now())
     val currentDate: StateFlow<LocalDate> = _currentDate.asStateFlow()
     
+    private val _scheduleCache = MutableStateFlow<ScheduleCache?>(null)
+    val scheduleCache: StateFlow<ScheduleCache?> = _scheduleCache.asStateFlow()
+    
+    private val _isScheduleLoading = MutableStateFlow(true)
+    val isScheduleLoading: StateFlow<Boolean> = _isScheduleLoading.asStateFlow()
+    
     init {
         loadApiConfig()
         loadData()
@@ -141,6 +149,37 @@ class VaccineViewModel(application: Application) : AndroidViewModel(application)
                 record
             }
         }
+        updateScheduleCache()
+    }
+    
+    private fun updateScheduleCache() {
+        val baby = _baby.value ?: return
+        val schedules = _schedules.value
+        val currentDate = _currentDate.value
+        
+        val grouped = schedules.groupBy { record ->
+            getVaccineMonthGroup(record.scheduledDate, baby.birthDate)
+        }.toSortedMap(compareBy<Pair<String, java.time.YearMonth?>>({ it.second != null }).thenBy { it.second ?: java.time.YearMonth.of(1970, 1) })
+        
+        _scheduleCache.value = ScheduleCache(
+            groupedSchedules = grouped,
+            completedCount = schedules.count { it.isCompleted },
+            totalCount = schedules.size,
+            computedDate = currentDate
+        )
+        _isScheduleLoading.value = false
+    }
+    
+    private fun getVaccineMonthGroup(scheduledDate: LocalDate, birthDate: LocalDate): Pair<String, java.time.YearMonth?> {
+        val daysDiff = ChronoUnit.DAYS.between(birthDate, scheduledDate).toInt()
+        
+        if (daysDiff < 30) {
+            return Pair("出生时", null)
+        }
+        
+        val monthIndex = daysDiff / 30
+        val month = java.time.YearMonth.from(birthDate).plusMonths(monthIndex.toLong())
+        return Pair("", month)
     }
     
     fun markVaccinationCompleted(recordId: String) {
@@ -151,6 +190,7 @@ class VaccineViewModel(application: Application) : AndroidViewModel(application)
                 record
             }
         }
+        updateScheduleCache()
         saveData()
     }
     
@@ -162,6 +202,7 @@ class VaccineViewModel(application: Application) : AndroidViewModel(application)
                 record
             }
         }
+        updateScheduleCache()
         saveData()
     }
     
@@ -524,6 +565,7 @@ class VaccineViewModel(application: Application) : AndroidViewModel(application)
                     if (_baby.value != null) {
                         _currentScreen.value = Screen.VaccineSchedule
                     }
+                    updateScheduleCache()
                 }
                 loadAnalysisResults()
             } catch (e: Exception) {
@@ -540,6 +582,8 @@ class VaccineViewModel(application: Application) : AndroidViewModel(application)
         _lastOverallAnalysisResult.value = null
         _lastCurrentMonthAnalysisResult.value = null
         _lastVaccineInfoResult.value = null
+        _scheduleCache.value = null
+        _isScheduleLoading.value = true
         prefsFile.delete()
         val configFile = File(getApplication<Application>().filesDir, "analysis_results.json")
         if (configFile.exists()) {
@@ -563,3 +607,10 @@ sealed class Screen(val ordinal: Int) {
     object AIAnalysisResult : Screen(5)
     object DonateScreen : Screen(6)
 }
+
+data class ScheduleCache(
+    val groupedSchedules: java.util.SortedMap<Pair<String, java.time.YearMonth?>, List<VaccinationRecord>>,
+    val completedCount: Int,
+    val totalCount: Int,
+    val computedDate: LocalDate
+)

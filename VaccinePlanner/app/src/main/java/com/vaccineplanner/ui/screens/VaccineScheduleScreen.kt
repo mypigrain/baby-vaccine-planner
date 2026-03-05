@@ -47,6 +47,8 @@ fun VaccineScheduleScreen(
     schedules: List<VaccinationRecord>,
     selectedPaidVaccines: List<Vaccine>,
     currentDate: LocalDate,
+    scheduleCache: Map<Pair<String, java.time.YearMonth?>, List<VaccinationRecord>>?,
+    isLoading: Boolean,
     onMarkCompleted: (String) -> Unit,
     onMarkIncomplete: (String) -> Unit,
     onNavigateToPaidVaccines: () -> Unit,
@@ -60,6 +62,15 @@ fun VaccineScheduleScreen(
     savedScrollPosition: Int = 0,
     onSaveScrollPosition: (Int) -> Unit = {}
 ) {
+    if (isLoading || scheduleCache == null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
     var showFilterMenu by remember { mutableStateOf(false) }
     var selectedFilter by remember { mutableStateOf("全部") }
     var showResetDialog by remember { mutableStateOf(false) }
@@ -88,39 +99,34 @@ fun VaccineScheduleScreen(
     val babyAgeInDays = ChronoUnit.DAYS.between(baby.birthDate, currentDate).toInt()
     val babyCurrentMonthIndex = babyAgeInDays / 30
     
-    val overdueSchedules by remember(schedules, currentDate, baby.birthDate) {
-        derivedStateOf {
-            schedules.filter { 
-                !it.isCompleted && isOverdue(it.scheduledDate, currentDate, baby.birthDate) 
-            }
+    val overdueSchedules = remember(scheduleCache, currentDate, baby.birthDate) {
+        scheduleCache.values.flatten().filter { 
+            !it.isCompleted && isOverdue(it.scheduledDate, currentDate, baby.birthDate) 
         }
     }
     
-    val currentMonthVaccineSchedules by remember(schedules, currentDate, baby.birthDate, babyCurrentMonthIndex) {
-        derivedStateOf {
-            schedules.filter { record ->
-                val daysDiff = ChronoUnit.DAYS.between(baby.birthDate, record.scheduledDate).toInt()
-                val vaccineMonthIndex = if (daysDiff < 30) -1 else daysDiff / 30
-                vaccineMonthIndex == babyCurrentMonthIndex
-            }
+    val currentMonthVaccineSchedules = remember(scheduleCache, currentDate, baby.birthDate, babyCurrentMonthIndex) {
+        scheduleCache.values.flatten().filter { record ->
+            val daysDiff = ChronoUnit.DAYS.between(baby.birthDate, record.scheduledDate).toInt()
+            val vaccineMonthIndex = if (daysDiff < 30) -1 else daysDiff / 30
+            vaccineMonthIndex == babyCurrentMonthIndex
         }
     }
     
-    val currentMonthWithOverdueSchedules by remember(currentMonthVaccineSchedules, overdueSchedules) {
-        derivedStateOf {
-            (currentMonthVaccineSchedules + overdueSchedules).distinctBy { it.id }
-        }
+    val currentMonthWithOverdueSchedules = remember(currentMonthVaccineSchedules, overdueSchedules) {
+        (currentMonthVaccineSchedules + overdueSchedules).distinctBy { it.id }
     }
     
-    val filteredSchedules by remember(selectedFilter, showCurrentMonthOnly, schedules, currentDate, currentMonthWithOverdueSchedules) {
+    val filteredSchedules by remember(selectedFilter, showCurrentMonthOnly, scheduleCache, currentMonthWithOverdueSchedules) {
         derivedStateOf {
+            val allRecords = scheduleCache.values.flatten()
             when (selectedFilter) {
-                "全部" -> if (showCurrentMonthOnly) currentMonthWithOverdueSchedules else schedules
-                "待接种" -> (if (showCurrentMonthOnly) currentMonthWithOverdueSchedules else schedules).filter { !it.isCompleted }
-                "已完成" -> schedules.filter { it.isCompleted }
-                "免费" -> schedules.filter { it.vaccine.isFree }
-                "自费" -> schedules.filter { !it.vaccine.isFree }
-                else -> schedules
+                "全部" -> if (showCurrentMonthOnly) currentMonthWithOverdueSchedules else allRecords
+                "待接种" -> (if (showCurrentMonthOnly) currentMonthWithOverdueSchedules else allRecords).filter { !it.isCompleted }
+                "已完成" -> allRecords.filter { it.isCompleted }
+                "免费" -> allRecords.filter { it.vaccine.isFree }
+                "自费" -> allRecords.filter { !it.vaccine.isFree }
+                else -> allRecords
             }
         }
     }

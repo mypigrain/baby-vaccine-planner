@@ -73,3 +73,14 @@ lint/tmp/
 
 # Mac OS
 .DS_Store
+
+# Development tools and SDKs
+android-sdk/
+gradle-8.5/
+jdk-17.0.13+11/
+
+# Android Studio specific
+.gradle/
+.idea/
+*.iml
+local.properties
